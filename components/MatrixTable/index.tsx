@@ -14,6 +14,7 @@ import {
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useContext } from 'react'
+import useSWR, { mutate } from 'swr'
 import { MatrixTableContext, MatrixTableContextProvider } from './context'
 
 type Props = {
@@ -32,6 +33,7 @@ const MatrixTable: import('react').FC<Omit<Props, 'initialMatrix'>> = ({ childre
   // State ------------------------------------------------------------------- //
   const [{ matrix }, dispatch] = useContext(MatrixTableContext)
   const [mode, setMode] = useState('view')
+  const { data } = useSWR('/api/pricing');
 
   const renderNumberInput = (duration: string, plan: string) => (
     <NumberInput value={matrix[duration][plan]} inputMode='numeric'>
@@ -76,21 +78,26 @@ const MatrixTable: import('react').FC<Omit<Props, 'initialMatrix'>> = ({ childre
   const save = async (event) => {
     event.preventDefault();
 
-    await fetch('/api/save-pricing', { method: 'POST', body: JSON.stringify(matrix) })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data, 'heree')
-        if (data.error) {
-          // Show error message
-          alert(data.error)
-        } else {
-          dispatch({
-            type: 'SET_ORIGINAL_MATRIX',
-            payload: data
-          })
-          setMode('view');
-        }
-      })
+    // SWR config
+    const address = '/api/save-pricing'
+    const fetcher = (...args) => fetch(...args).then((res) => res.json());
+    //const { mutate } = useSWRConfig()
+
+    const { data, error } = await fetcher(address, {
+      method: 'POST',
+      body: JSON.stringify(matrix),
+    });
+
+    if (!error) {
+      mutate('/api/pricing', dispatch({
+        type: 'SET_ORIGINAL_MATRIX',
+        payload: data
+      }))
+      setMode('view');
+    } else {
+      // Show error message
+      alert(error)
+    }
   }
 
   const edit = () => {
@@ -98,9 +105,10 @@ const MatrixTable: import('react').FC<Omit<Props, 'initialMatrix'>> = ({ childre
   }
 
   const cancel = () => {
-    dispatch({
-      type: 'SET_MATRIX'
-    })
+    mutate('/api/pricing', dispatch({
+      type: 'SET_MATRIX',
+      payload: data
+    }))    
     setMode('view');
   }
 

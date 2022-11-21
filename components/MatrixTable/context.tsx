@@ -49,7 +49,6 @@ type MatrixAction = {
  */
 type ProviderProps = {
   initialMatrix?: import('../../types').Matrix
-  //children?: ReactNode
 }
 
 /**
@@ -101,14 +100,14 @@ const reducer = (state: MatrixTableState, action: MatrixAction): MatrixTableStat
       if (action.metadata && action.metadata.resetToEmpty) {
         // Set the values from emptyMatrix
         state.matrix = emptyMatrix
-        //state.matrix = Object.assign(state.matrix, emptyMatrix);
       }
-      console.log({...state}, 'set matrix')
+
       return {
         ...state
       }
     case 'SET_ORIGINAL_MATRIX':
       state.originalMatrix = action.payload || emptyMatrix
+
       return {
         ...state
       }
@@ -122,9 +121,7 @@ const reducer = (state: MatrixTableState, action: MatrixAction): MatrixTableStat
         // Recalculate standard & unlimited payload
         state.matrix[duration].standard = newPrice * 2
         state.matrix[duration].unlimited = newPrice * 3
-
       }
-      console.log('after', { ...state })
 
       return {
         ...state

@@ -22,7 +22,7 @@ export default async (req: import('next').NextApiRequest, res: import('next').Ne
   try {
     // This will throw when the validation fails
     const data: any = Body.safeParse(JSON.parse(req.body))
-    
+
     if (!data.success && data.error) { // Zod error
       const errCode = data.error.issues[0].code
       const errMsg = data.error.issues[0].message
@@ -37,7 +37,7 @@ export default async (req: import('next').NextApiRequest, res: import('next').Ne
     })
 
     res.statusCode = 200
-    res.json(data.data)
+    res.json(data)
   } catch(e) {
     res.statusCode = 500
     res.json({ error: e.message || 'Unknown Error' })
