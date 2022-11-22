@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import { z } from 'zod'
 
 // This is the Zod validation schema, you define
@@ -7,7 +7,7 @@ import { z } from 'zod'
 // If you prefer to use your own way of validating the 
 // incoming data, you can use it.
 const plan = z.object({
-  lite: z.number({required_error: 'This is required'}),
+  lite: z.number(),
   standard: z.number(),
   unlimited: z.number()
 })
@@ -24,9 +24,11 @@ export default async (req: import('next').NextApiRequest, res: import('next').Ne
     const data: any = Body.safeParse(JSON.parse(req.body))
 
     if (!data.success && data.error) { // Zod error
-      const errCode = data.error.issues[0].code
-      const errMsg = data.error.issues[0].message
-      throw Error(`${errCode}: ${errMsg}`)
+      let errMessage = []
+      data.error.issues.forEach(element => {
+        errMessage.push(`${element.path[0]} ${element.message}`)
+      });
+      throw Error(errMessage.join(', '))
     }
 
     // Write the new matrix to public/pricing.json

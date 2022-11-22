@@ -1,16 +1,20 @@
 import { 
-  Box, 
-  Button, 
-  NumberInput, 
-  NumberInputField, 
-  Table, 
-  TableContainer, 
-  Tbody, 
-  Td, 
-  Tfoot, 
-  Th, 
-  Thead, 
-  Tr 
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  Box,
+  Button,
+  NumberInput,
+  NumberInputField,
+  Table,
+  TableContainer,
+  Tbody,
+  Td,
+  Text, 
+  Tfoot,
+  Th,
+  Thead,
+  Tr
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useContext } from 'react'
@@ -33,6 +37,7 @@ const MatrixTable: import('react').FC<Omit<Props, 'initialMatrix'>> = ({ childre
   // State ------------------------------------------------------------------- //
   const [{ matrix }, dispatch] = useContext(MatrixTableContext)
   const [mode, setMode] = useState('view')
+  const [error, setError] = useState('')
   const { data } = useSWR('/api/pricing');
 
   const renderNumberInput = (duration: string, plan: string) => (
@@ -80,8 +85,8 @@ const MatrixTable: import('react').FC<Omit<Props, 'initialMatrix'>> = ({ childre
 
     // SWR config
     const address = '/api/save-pricing'
+    //@ts-ignore
     const fetcher = (...args) => fetch(...args).then((res) => res.json());
-    //const { mutate } = useSWRConfig()
 
     const { data, error } = await fetcher(address, {
       method: 'POST',
@@ -93,22 +98,31 @@ const MatrixTable: import('react').FC<Omit<Props, 'initialMatrix'>> = ({ childre
         type: 'SET_ORIGINAL_MATRIX',
         payload: data
       }))
+
+      setError('')
       setMode('view');
     } else {
       // Show error message
-      alert(error)
+      setError(error)
     }
   }
 
   const edit = () => {
     setMode('edit');
+    mutate('/api/pricing', dispatch({
+      type: 'SET_ORIGINAL_MATRIX',
+      payload: data
+    }))
   }
 
   const cancel = () => {
+    console.log(data, 'cancel')
     mutate('/api/pricing', dispatch({
       type: 'SET_MATRIX',
       payload: data
-    }))    
+    }))
+
+    setError('')
     setMode('view');
   }
 
@@ -125,9 +139,11 @@ const MatrixTable: import('react').FC<Omit<Props, 'initialMatrix'>> = ({ childre
 
   // Rendering --------------------------------------------------------------- //
   return (
-    <Box mt={10}>
+    <Box mt={10} justifyContent='center' justifyItems='center' display='inline'>
+      <Text fontSize='3xl' align='center'>Flux Pricing Table</Text>
+      <br />
       <TableContainer>
-        <Table size='sm' variant='simple' bg='#B2F5EA' >
+        <Table size='sm' variant='simple' bg='#B2F5EA' id='pricing-table'>
           <Thead>
             <Tr>
               <Th></Th>
@@ -156,6 +172,14 @@ const MatrixTable: import('react').FC<Omit<Props, 'initialMatrix'>> = ({ childre
           </Tfoot>
         </Table>
       </TableContainer>
+      {
+        error && (
+          <Alert status='error'>
+            <AlertIcon />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )
+      }
     </Box>
   )
 }
